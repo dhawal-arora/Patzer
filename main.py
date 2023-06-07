@@ -1,6 +1,5 @@
 import discord
 import os
-from keep_alive import keep_alive
 from discord.ext import commands
 import requests
 import json
@@ -13,9 +12,7 @@ tournaments = lichess.tournaments.get()
 lengthinfo=len(tournaments['created'])
 lengthstarted=len(tournaments['started'])
 
-
-
-client = commands.Bot(command_prefix=['Ptz.','ptz.','p.','P.'])
+client = commands.Bot(command_prefix=['Ptz.','ptz.','p.','P.'], intents=discord.Intents.all())
 client.remove_command("help")
 
 @client.event
@@ -24,31 +21,30 @@ async def on_ready():
   await client.wait_until_ready()
   await client.change_presence(activity=discord.Game(name="Bot commands down due to implementation of new slash commands "))
 #Retrieve Data From Chess.com & Lichess | Command: p.help
+  await client.tree.sync()
+  print(f"The totat number is {str(len(client.tree.sync()))}")
 
 
-@client.command(name="help")
+@client.tree.command(name="help", description="Basic help command")
 @commands.cooldown(1,5,commands.BucketType.user)
-async def help(context):
+async def help(content: discord.Interaction):
    myEmbed = discord.Embed(title="Patzer Bot", description="Write the command in the chat below. \n""\u200b",color=0x00ff00)
-   myEmbed.add_field(name="Commands List:", value ="**p.help**-List of bot commands\n**p.about**-Learn more about the bot\n**p.lichessupcoming**-List of upcoming lichess tournaments\n""**p.lichessstarted**-List of started lichess tournaments\n""**p.lichessgames [Player 1] [Player 2]**-Find score between 2 users\n""**p.chesscomclub [ClubName]**-Chesscom Club info\n""**p.lichessuserinfo [Username]**-View Lichess User Info\n**p.lichessvariantratings [Username]**-View variant ratings of a lichess user\n**p.chesscomuserinfo [Username]**-View Chess.com User Info\n**p.userarena [Username]**-Lichess Arena Tournaments made by a User\n**p.leaderboard[**live_**Format]**-Chess.com Top 10 Leaderboard\n**p.swisstournament [Tournament ID]**-Lichess Swiss Tournament Details \n**p.arenatournament [Tournament ID]**-Lichess Arena Tournament Details\n**p.teamtournament [Tournament ID]**-Lichess Team Tournament Details\n**p.chesscomdownload [Username] [Year] [Month]**-Download Chess.com Games\n**p.lichessdownload [Username]**-Download All Lichess Games of a Player\n\nJoin our server and view #preview-chess-area for help in using a command\n\n", inline=False)
+   myEmbed.add_field(name="Commands List:", value ="**p.help**-List of bot commands\n**p.about**-Learn more about the bot\n**p.lichessupcoming**-List of upcoming lichess tournaments\n""**p.lichessstarted**-List of started lichess tournaments\n""**p.lichessgames [Player 1] [Player 2]**-Find scoret]**-Chess.com Top 10 Leaderboard\n**p.swisstournament [Tournament ID]**er\n\nJoin our server and view #preview-chess-area for help in using a command\n\n", inline=False)
    myEmbed.add_field(name="\u200b \n""SUPPORT PATZER BOT:", value = "[Add bot to your server](https://discord.com/api/oauth2/authorize?client_id=803120439550279690&permissions=519233&scope=bot)\n""[Join our server](https://discord.gg/cdfUp5Zqs7)\n""[Vote for us](https://top.gg/bot/803120439550279690)\n ", inline=False)
-   await context.message.channel.send(embed=myEmbed)
+   await content.response.send_message(embed=myEmbed)
 
-@client.command(name="about")
+@client.tree.command(name="about")
 @commands.cooldown(1,5,commands.BucketType.user)
-async def about(context):
+async def about(content: discord.Interaction):
    myEmbed = discord.Embed(title="About Us", description="Hi! My name is Patzer Bot. I\'m one of the FINEST Event advertisement discord bot. Get regular updates regarding various events and tournaments taking place throughout various servers. Organizers may get their events featured through me .It will then be shared to various servers, increasing the amount of people participating and improving the audience. Patzer also has dedicated chess commands to find various lichess tournaments/clubs etc! Use **p.addevent** for more details on getting your event promoted. Use **p.help** to view my simple bot commands!\n\n", color=0x00ff00)
    myEmbed.set_thumbnail(url="https://cdn.discordapp.com/attachments/782500664793759744/808578357893267477/Screenshot_714.png")
    myEmbed.add_field(name="\u200b \n""SUPPORT PATZER BOT:", value = "[Add bot to your server](https://discord.com/api/oauth2/authorize?client_id=803120439550279690&permissions=519233&scope=bot)\n""[Join our server](https://discord.gg/cdfUp5Zqs7)\n""[Vote for us](https://top.gg/bot/803120439550279690)\n ", inline=False)
-   await context.message.channel.send(embed=myEmbed)
+   await content.response.send_message(embed=myEmbed)
 
-
-
-
-@client.command()
+@client.tree.command(name="lichessgames", description="Score between two players")
 @commands.cooldown(1,5,commands.BucketType.user)
-async def lichessgames(context, value1, value2):
-  response3=requests.get(str(f"https://lichess.org/api/crosstable/{value1}/{value2}"))
+async def lichessgames(content: discord.Interaction, player1:str, player2:str):
+  response3=requests.get(str(f"https://lichess.org/api/crosstable/{player1}/{player2}"))
   Total='Total Games Played: '+str(response3.json().get('nbGames'))
   Player1 = list(response3.json().get('users').keys())[0]
   Player1Score = list(response3.json().get('users').values())[0]
@@ -56,61 +52,61 @@ async def lichessgames(context, value1, value2):
   Player2Score= list(response3.json().get('users').values())[1] 
   whole='Current Scores:'+'\n\n'+str(Player1)+': '+str(Player1Score)+'\n\n'+str(Player2)+': '+str(Player2Score)+'\n\n'+str(Total)
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=whole,color=0x00ff00)
-  await context.channel.send(embed=myEmbed)
+  await content.response.send_message(embed=myEmbed)
 
-@client.command()
+@client.tree.command(name="chesscomclub", description="Chess.com club Info")
 @commands.cooldown(1,5,commands.BucketType.user)
-async def chesscomclub(context, *, value):
+async def chesscomclub(content:discord.Interaction, clubname:str):
  value= value.replace(" ", "-")
- response3=requests.get (str(f"https://api.chess.com/pub/club/{value}"))
+ response3=requests.get (str(f"https://api.chess.com/pub/club/{clubname}"))
  newchess='**Club Name: **'+str(response3.json().get('name'))+'\n**Members: **'+str(response3.json().get('members_count'))+'\n**Visibility: **'+str(response3.json().get('visibility'))+'\n**Location: **'+str(response3.json().get('location'))+'**\nJoining Link: **'+str(response3.json().get('join_request'))
  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=newchess,color=0x00ff00)
  if (response3.json().get('icon') != None):
    myEmbed.set_thumbnail(url=str(response3.json().get('icon')))
- await context.channel.send(embed=myEmbed)
+ await content.response.send_message(embed=myEmbed)
 
 
-@client.command(name="lichessupcoming")
-@commands.cooldown(1,60,commands.BucketType.user)
-async def lichessupcoming(context):
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="All tournaments shown below will have a minimum of 15 players.\n Only the top 4 events according to the number of players are shown.\n If nothing is shown it indicates that no tournaments meet the requirements.\n\nList of upcoming arena tournaments hosted by lichess:",color=0x00ff00)
-  maxRecord = min(4,lengthinfo)
-  for i in range(maxRecord):
-   dict = tournaments['created'][i]
-   if dict['nbPlayers'] > 15:
-    if dict['clock']['limit'] < 60:
-      timecontrolduration=str(dict['clock']['limit'])+'+'+str(dict['clock']['increment'])
-    else:
-      timecontrolduration=str(int(dict['clock']['limit']/60))+'+'+str(dict['clock']['increment'])
-    duration=timecontrolduration+' Matches for '+str(dict['minutes'])+' minutes'
-    timing=str(dict['startsAt'])+' (Add 5:30 for IST)'
-    str1 = 'https://lichess.org/tournament/'.strip()+dict['id']+'\n'
-    lichessupcomingt='**Tournament Name:** '+str(dict['fullName'])+'**\nStarting Date/Time:** '+str(timing)+'**\nDuration:** '+str(duration)+'\n**Tournament Link:** '+str(str1)
-    myEmbed.add_field(name="\u200b", value=lichessupcomingt,inline=False)
-  await context.channel.send(embed=myEmbed)
+# @client.tree.command(name="lichessupcoming", description="Upcoming lichess tournament")
+# @commands.cooldown(1,60,commands.BucketType.user)
+# async def lichessupcoming(content:discord.Interaction):
+#   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="All tournaments shown below will have a minimum of 15 players.\n Only the top 4 events according to the number of players are shown.\n If nothing is shown it indicates that no tournaments meet the requirements.\n\nList of upcoming arena tournaments hosted by lichess:",color=0x00ff00)
+#   maxRecord = min(4,lengthinfo)
+#   for i in range(maxRecord):
+#    dict = tournaments['created'][i]
+#    if dict['nbPlayers'] > 15:
+#     if dict['clock']['limit'] < 60:
+#       timecontrolduration=str(dict['clock']['limit'])+'+'+str(dict['clock']['increment'])
+#     else:
+#       timecontrolduration=str(int(dict['clock']['limit']/60))+'+'+str(dict['clock']['increment'])
+#     duration=timecontrolduration+' Matches for '+str(dict['minutes'])+' minutes'
+#     timing=str(dict['startsAt'])+' (Add 5:30 for IST)'
+#     str1 = 'https://lichess.org/tournament/'.strip()+dict['id']+'\n'
+#     lichessupcomingt='**Tournament Name:** '+str(dict['fullName'])+'**\nStarting Date/Time:** '+str(timing)+'**\nDuration:** '+str(duration)+'\n**Tournament Link:** '+str(str1)
+#     myEmbed.add_field(name="\u200b", value=lichessupcomingt,inline=False)
+#   await content.response.send_message(embed=myEmbed)
 
 
-@client.command(name="lichessstarted")
-@commands.cooldown(1,60,commands.BucketType.user)
-async def lichessstarted(context):
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="All tournaments shown below will have a minimum of 20 players.\n Only the top 4 events according to the number of players are shown.\n If nothing is shown it indicates that no tournaments meet the requirements.\n\nList of started arena tournaments hosted by lichess:",color=0x00ff00)
-  maxRecord = min(4,lengthstarted)
-  for i in range(maxRecord):
-   dict = tournaments['started'][i]
-   if dict['nbPlayers'] > 20:
-    if dict['clock']['limit'] < 60:
-     timecontrolduration=str(dict['clock']['limit'])+'sec+'+str(dict['clock']['increment'])
-    else:
-     timecontrolduration=str(int(dict['clock']['limit']/60))+'+'+str(dict['clock']['increment'])
-   duration=timecontrolduration+' Matches for '+str(dict['minutes'])+' minutes'
-   str1 = 'https://lichess.org/tournament/'.strip()+dict['id']+'\n'
-   newlichess='**Tournament Name: **'+str(dict['fullName'])+'\n**Finishes At: **'+str(dict['finishesAt'])+' (Add 5:30 for IST)''\n**Duration: **'+str(duration)+'\n**Tournament Link: **'+str(str1)
-   myEmbed.add_field(name='\u200b', value=newlichess,inline=False)
-  await context.channel.send(embed=myEmbed)
+# @client.tree.command(name="lichessstarted", description="Started lichess tournament")
+# @commands.cooldown(1,60,commands.BucketType.user)
+# async def lichessstarted(content:discord.Interaction):
+#   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="All tournaments shown below will have a minimum of 20 players.\n Only the top 4 events according to the number of players are shown.\n If nothing is shown it indicates that no tournaments meet the requirements.\n\nList of started arena tournaments hosted by lichess:",color=0x00ff00)
+#   maxRecord = min(4,lengthstarted)
+#   for i in range(maxRecord):
+#    dict = tournaments['started'][i]
+#    if dict['nbPlayers'] > 20:
+#     if dict['clock']['limit'] < 60:
+#      timecontrolduration=str(dict['clock']['limit'])+'sec+'+str(dict['clock']['increment'])
+#     else:
+#      timecontrolduration=str(int(dict['clock']['limit']/60))+'+'+str(dict['clock']['increment'])
+#    duration=timecontrolduration+' Matches for '+str(dict['minutes'])+' minutes'
+#    str1 = 'https://lichess.org/tournament/'.strip()+dict['id']+'\n'
+#    newlichess='**Tournament Name: **'+str(dict['fullName'])+'\n**Finishes At: **'+str(dict['finishesAt'])+' (Add 5:30 for IST)''\n**Duration: **'+str(duration)+'\n**Tournament Link: **'+str(str1)
+#    myEmbed.add_field(name='\u200b', value=newlichess,inline=False)
+#   await content.response.send_message(embed=myEmbed)
 
-@client.command(name="lichessuserinfo")
-async def lichessuserinfo(context, value1):
-  response3=requests.get (str(f'https://lichess.org/api/user/{value1}'))
+@client.tree.command(name="lichessuserinfo", description="Lichess user info (follow following info issue)")
+async def lichessuserinfo(content:discord.Interaction, username:str):
+  response3=requests.get (str(f'https://lichess.org/api/user/{username}'))
   allinfo=str('Username: '+str(response3.json().get('username'))+'\n'+
   'Title: '+str(response3.json().get('title'))+'\n'+
   'Lichess Patron: '+str(response3.json().get('patron'))+'\n'+
@@ -160,12 +156,12 @@ async def lichessuserinfo(context, value1):
     puzzles=str(puzzles)+'Score: '+str((response3.json().get('perfs')['storm']['score']))
     myEmbed1.add_field(name="Puzzle Storm", value = puzzles, inline=True)
   myEmbed1.set_footer(text="For variant ratings use p.lichessvariantratings [username]")
-  await context.message.channel.send(embed=myEmbed1)
-
-@client.command(name="lichessvariantratings")
-async def moreuserinfo(context, value1):
+  await content.response.send_message(embed=myEmbed1)
+#----------------------------------------------
+@client.tree.command(name="lichessvariantratings", description="Lichess variant ratings (less games highest rating)")
+async def lichessvariantratings(content:discord.Interaction , username:str):
   myEmbed1 = discord.Embed(title="Patzer Bot: Chess Area", description="More Ratings Info:",color=0x00ff00)
-  response3=requests.get (str(f'https://lichess.org/api/user/{value1}'))
+  response3=requests.get (str(f'https://lichess.org/api/user/{username}'))
   otherr=''
   if 'chess960' in response3.json().get('perfs'):
     otherr='Games: '+str((response3.json().get('perfs')['chess960']['games']))+'\n'
@@ -200,13 +196,13 @@ async def moreuserinfo(context, value1):
     otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['threeCheck']['rating']))+'\n\n'
     myEmbed1.add_field(name="3-Check", value = otherr, inline=True)
 
-  await context.message.channel.send(embed=myEmbed1)
+  await content.response.send_message(embed=myEmbed1)
 
-@client.command(name="chesscomuserinfo")
-async def chesscomuserinfo(context, value1):
-  response3=requests.get (str(f'https://api.chess.com/pub/player/{value1}'))
-  response4=requests.get (str(f'https://api.chess.com/pub/player/{value1}/stats'))
-  response5=requests.get (str(f'https://api.chess.com/pub/player/{value1}/is-online'))
+@client.tree.command(name="chesscomuserinfo", description="User Info of chess.com user (no profile photo)")
+async def chesscomuserinfo(content: discord.Interaction, username:str):
+  response3=requests.get (str(f'https://api.chess.com/pub/player/{username}'))
+  response4=requests.get (str(f'https://api.chess.com/pub/player/{username}/stats'))
+  response5=requests.get (str(f'https://api.chess.com/pub/player/{username}/is-online'))
   chesscomprofile='Username: '+str(response3.json().get('username'))+'\n'+'Profile: '+str(response3.json().get('url'))+'\nStatus of Account: '+str(response3.json().get('status'))+'\nFollowers: '+str(response3.json().get('followers'))+'\nStreamer: '+str(response3.json().get('is_streamer'))+'\nOnline: '+str(response5.json().get('online'))
 
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=chesscomprofile,color=0x00ff00)
@@ -234,40 +230,41 @@ async def chesscomuserinfo(context, value1):
   if response4.json().get('lessons') != None:
     chesscomlessons='Highest Rating: '+str((response4.json().get('lessons')['highest']['rating']))+'\nLowest Rating: '+str((response4.json().get('lessons')['lowest']['rating']))
     myEmbed.add_field(name="Puzzle Rush", value =chesscomlessons, inline=True)
-  await context.message.channel.send(embed=myEmbed)
+  await content.response.send_message(embed=myEmbed)
 
-@client.command(name="chesscomdownload")
-async def chesscomdownload(context, value1, value2, value3):
-  a=(f"https://api.chess.com/pub/player/{value1}/games/{value2}/{value3}/pgn")
+@client.tree.command(name="chesscomdownload", description="Download chesscom games of a person (now with time stamps)")
+async def chesscomdownload(content:discord.Interaction, username:str, year:str, monthnumber:str):
+  a=(f"https://api.chess.com/pub/player/{username}/games/{year}/{monthnumber}/pgn")
   click='Click Here'
   b='['+click+']'+'('+a+')'
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area\nClick here to download the games in PGN", description=b,color=0x00ff00)
-  await context.channel.send(embed=myEmbed)
+  await content.response.send_message(embed=myEmbed)
 
-@client.command(name='gif')
+@client.tree.command(name='lichessgif' , description='Send a GIF of a lichess game (no customization yet but roles coming)')
 @commands.cooldown(1,5,commands.BucketType.user)
-async def gif(context, value1):
- game=str(f"https://lichess.org/game/export/gif/{value1}.gif")
- role1=await context.channel.send(game)
- await role1.add_reaction("🔃")
- reaction,user = await client.wait_for("reaction_add", check=lambda reaction,user: reaction.message==role1 and user==context.author)
- if str(reaction.emoji) == "🔃":
-   await role1.delete (delay = 0)
-   game=str(f"https://lichess.org/game/export/gif/black/{value1}.gif")
-   await context.channel.send(game)
+async def lichessgif(content:discord.Interaction, gameid:str):
+ game=str(f"https://lichess.org/game/export/gif/{gameid}.gif")
+ await content.response.send_message(game)
+#  role1=await content.response.send_message(game)
+#  await role1.add_reaction("🔃")
+#  reaction,user = await client.wait_for("reaction_add", check=lambda reaction,user: reaction.message==role1 and user==context.author)
+#  if str(reaction.emoji) == "🔃":
+#    await role1.delete (delay = 0)
+#    game=str(f"https://lichess.org/game/export/gif/black/{value1}.gif")
+#    await content.response.send_message(game)
 
-@client.command(name="swisstournament")
-async def swisstournament(context, value1):
+@client.tree.command(name="lichessswisstournament", description="Lichess Swiss Tournament Ranking/game downloads/trf download")
+async def lichessswisstournament(content:discord.Interaction, tournamentid:str):
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Swiss Tournament Database \n""\u200b",color=0x00ff00)
-  a=(f"https://lichess.org/swiss/{value1}.trf")
+  a=(f"https://lichess.org/swiss/{tournamentid}.trf")
   click='Click Here'
   b='['+click+']'+'('+a+')'
   myEmbed.add_field(name="Tournament Report File:", value = b, inline=False)
-  a=(f"https://lichess.org/api/swiss/{value1}/games")
+  a=(f"https://lichess.org/api/swiss/{tournamentid}/games")
   click='Click Here'
   b='['+click+']'+'('+a+')'
   myEmbed.add_field(name="Download Games:", value = b, inline=False)
-  response4=requests.get (f'https://lichess.org/api/swiss/{value1}/results')
+  response4=requests.get (f'https://lichess.org/api/swiss/{tournamentid}/results')
   data = response4.text.strip("\n")
   s = data.split("\n")
   count = 0
@@ -284,19 +281,19 @@ async def swisstournament(context, value1):
     if (count == 10):
       break
   myEmbed.add_field(name="Top 10:", value =display,inline=False)
-  await context.channel.send(embed=myEmbed)
+  await content.response.send_message(embed=myEmbed)
 
 #response4=requests.get ('https://lichess.org/api/swiss/g7aovChl/results')
 #print (response4.json().get('rank'))
 
-@client.command(name="arenatournament")
-async def arenatournament(context, value1):
+@client.tree.command(name="lichessarenatournament" , description='Lichess Arena Tournament Ranking Download (Recently Completed tourney might have issue)')
+async def lichessarenatournament(content:discord.Interaction, tournamentid:str):
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Arena Tournament Database\n""\u200b",color=0x00ff00)
-  a=(f"https://lichess.org/api/tournament/{value1}/games")
+  a=(f"https://lichess.org/api/tournament/{tournamentid}/games")
   click='Click Here'
   b='['+click+']'+'('+a+')'
   myEmbed.add_field(name="Download Games:", value = b, inline=False)
-  response4=requests.get (f'https://lichess.org/api/tournament/{value1}/results')
+  response4=requests.get (f'https://lichess.org/api/tournament/{tournamentid}/results')
   data = response4.text.strip("\n")
   s = data.split("\n")
   count = 0
@@ -312,16 +309,16 @@ async def arenatournament(context, value1):
     if (count == 10):
       break
   myEmbed.add_field(name="Top 10:", value =display,inline=False)
-  await context.channel.send(embed=myEmbed)
-
-@client.command(name="teamtournament")
-async def teamtournament(context, value1):
+  await content.response.send_message(embed=myEmbed)
+#-----------------------------------------------------------
+@client.tree.command(name="lichessteamtournament", description='Lichess Team Tournament Ranking+download (spacing issue)')
+async def lichessteamtournament(content:discord.Interaction, tournamentid:str):
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Team Arena Tournament Database \n""\u200b",color=0x00ff00)
-  a=(f"https://lichess.org/api/tournament/{value1}/games")
+  a=(f"https://lichess.org/api/tournament/{tournamentid}/games")
   click='Click Here'
   b='['+click+']'+'('+a+')'
   myEmbed.add_field(name="Download Games:", value = b, inline=False)
-  response4=requests.get (f"https://lichess.org/api/tournament/{value1}/teams")
+  response4=requests.get (f"https://lichess.org/api/tournament/{tournamentid}/teams")
   lengthd = len(response4.json().get('teams'))
   if lengthd >=10:
     for a in range (0,10):
@@ -331,30 +328,29 @@ async def teamtournament(context, value1):
     for a in range (0,lengthd):
       teamevent= str(response4.json().get('teams')[a]['rank'])+'. Team '+str(response4.json().get('teams')[a]['id'])+' (Score: '+str(response4.json().get('teams')[a]['score'])+')'
       myEmbed.add_field(name="\u200b", value = teamevent, inline=False)
-  await context.channel.send(embed=myEmbed)
-
-@client.command(name="leaderboard")
-async def leaderboard(context, value1):
+  await content.response.send_message(embed=myEmbed)
+#----------------------------------------------------------------
+@client.tree.command(name="chesscomleaderboard", description='chesscom Leaderboard (Formats:daily,live_rapid,live_blitz,live_bullet,lessons,tactics')
+async def chesscomleaderboard(content:discord.Interaction, gameformat:str):
   response3=requests.get ('https://api.chess.com/pub/leaderboards')
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Leaderboard\n",color=0x00ff00)
   finalString = ''
   for a in range (0,10):
-    username=str(response3.json().get(value1)[a]['username'])
-    url=str(response3.json().get(value1)[a]['url'])
+    username=str(response3.json().get(gameformat)[a]['username'])
+    url=str(response3.json().get(gameformat)[a]['url'])
     Sno=a+1
     Sno=str(Sno)+'. '
-    if 'title' in response3.json().get(value1)[a]:
-      playertitle= str(response3.json().get(value1)[a]['title'])+' '
+    if 'title' in response3.json().get(gameformat)[a]:
+      playertitle= str(response3.json().get(gameformat)[a]['title'])+' '
       finalString = finalString + str(Sno)+str(playertitle)+"["+username+"]("+url+")\n"
-      
     else:
       finalString = finalString + str(Sno)+"["+username+"]("+url+")\n"
   myEmbed.add_field(name="\u200b", value = finalString, inline=False)
-  await context.channel.send(embed=myEmbed)
+  await content.response.send_message(embed=myEmbed)
 
-@client.command(name="userarena")
-async def userarena(context,value1):
-  response4=requests.get(f'https://lichess.org/api/user/{value1}/tournament/created')
+@client.tree.command(name="lichessuserarena", description="Lichess Arenas created by a user")
+async def lichessuserarena(content:discord.Interaction, username:str):
+  response4=requests.get(f'https://lichess.org/api/user/{username}/tournament/created')
   data = response4.text.strip("\n")
   s = data.split("\n")
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Tournaments made by Individuals.\n",color=0x00ff00)
@@ -371,16 +367,16 @@ async def userarena(context,value1):
         linking='https://lichess.org/swiss/'.strip()+json.loads(i).get('id')
         entire=str(name)+'\n'+str(timecontrolduration)+' Matches for '+str(duration)+' Minutes\n'+str(linking)+'\n'
         myEmbed.add_field(name="\u200b", value = entire, inline=False)
-  await context.channel.send(embed=myEmbed)
+  await content.response.send_message(embed=myEmbed)
 
 
-@client.command(name="lichessdownload")
-async def lichessdownload(context, value1):
-  a=(f"https://lichess.org/api/games/user/{value1}")
+@client.tree.command(name="lichessdownload", description="Download lichess games of a user")
+async def lichessdownload(content: discord.Interaction, username:str):
+  a=(f"https://lichess.org/api/games/user/{username}")
   click='Click Here'
   b='['+click+']'+'('+a+')'
   myEmbed = discord.Embed(title="Patzer Bot: Chess Area\nClick here to download the games in PGN\n(Speed= 20 Games per Second)", description=b,color=0x00ff00)
-  await context.channel.send(embed=myEmbed)
+  await content.response.send_message(embed=myEmbed)
 
-keep_alive()
+
 client.run(os.getenv('TOKEN'))

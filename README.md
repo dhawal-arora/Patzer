@@ -1,8 +1,5 @@
 # Patzer Bot
-
-*BOT COMMANDS DOWN DUE TO SLASH COMMAND IMPLEMENTATION*
-
-October 2020 - Early 2020
+October 2020 - Early 2021 (Slash commands now implemented for main.py)
 
 Previously, a bot made to both advertise events/tournaments between servers and chess commands. Later, made into a chess only bot.
 
