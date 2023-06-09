@@ -4,7 +4,7 @@ RoadMap:
 October 2020: Started coding bot on throwaway testing bot
 Jan 2021: Hosted the bot
 Feb 2021: Bot became verified
-*break*
+-break-
 Jun 2022: Implemented slash commands+new features
 
 
