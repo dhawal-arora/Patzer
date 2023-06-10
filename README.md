@@ -1,4 +1,4 @@
- Patzer Bot
+## Patzer Bot
 
 [Click Here](https://discord.com/api/oauth2/authorize?client_id=803120439550279690&permissions=519233&scope=bot)
 
