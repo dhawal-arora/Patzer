@@ -13,14 +13,15 @@ tournaments = lichess.tournaments.get()
 lengthinfo=len(tournaments['created'])
 lengthstarted=len(tournaments['started'])
 
-client = commands.Bot(command_prefix=['Ptz.','ptz.','p.','P.'], intents=None)
+client = commands.Bot(command_prefix=['Ptz.','ptz.','p.','P.'], intents=discord.Intents.all())
+#intents=discord.Intents.all()
 client.remove_command("help")
 
 @client.event
 async def on_ready():
   print ('We have logged in as {0.user}' .format (client))
   await client.wait_until_ready()
-  await client.change_presence(activity=discord.Game(name="Retrieve Data From Chess.com & Lichess"))
+  await client.change_presence(activity=discord.Game(name="Retrieve Data From Chess.com & Lichess check"))
   await client.tree.sync()
 
 
@@ -39,8 +40,8 @@ async def help(content: discord.Interaction):
 @client.tree.command(name="score", description="Score between two players")
 @commands.cooldown(1,5,commands.BucketType.user)
 async def score(content: discord.Interaction, player1:str, player2:str):
-  response3=requests.get(str(f"https://lichess.org/api/crosstable/{player1}/{player2}"))
-  Total='Total Games Played: '+str(response3.json().get('nbGames'))
+  response3=requests.get(f"https://lichess.org/api/crosstable/{player1}/{player2}")
+  Total=(f"Total Games Played: {response3.json().get('nbGames')}")
   Player1 = list(response3.json().get('users').keys())[0]
   Player1Score = list(response3.json().get('users').values())[0]
   Player2= list(response3.json().get('users').keys())[1] 
@@ -91,108 +92,119 @@ async def score(content: discord.Interaction, player1:str, player2:str):
 @client.tree.command(name="userinfo", description="Lichess user info (follow following info issue)")
 async def userinfo(content:discord.Interaction, username:str):
   response3=requests.get (str(f'https://lichess.org/api/user/{username}'))
-  allinfo=str('Username: '+str(response3.json().get('username'))+'\n'+
-  'Title: '+str(response3.json().get('title'))+'\n'+
-  'Lichess Patron: '+str(response3.json().get('patron'))+'\n'+
-  'Profile Link: '+str(response3.json().get('url'))+'\n'+
-  'Online Status: '+str(response3.json().get('online'))+'\n\n'+
-  'All Games Played: '+str(response3.json().get('count')['all'])+'\n'+
-  'Rated Games: '+str(response3.json().get('count')['rated'])+'\n'+
-  'Wins: '+str(response3.json().get('count')['win'])+'\n'+
-  'Draws: '+str(response3.json().get('count')['draw'])+'\n'+
-  'Losses: '+str(response3.json().get('count')['loss'])+'\n'+
-  'Completion Rate: '+str(response3.json().get('completionRate'))+'%\n'+
-  'Games Playing Now: '+str(response3.json().get('count')['playing'])+'\n\n'+
-  'Followers: '+str(response3.json().get('nbFollowers'))+'\n'+
-  'Following: '+str(response3.json().get('nbFollowing'))+'\n\u200b')
+  if response3.json().get("error")!="Not found":
+    allinfo=str(
+    'Username: '+str(response3.json().get('username'))+'\n'+
+    'Title: '+str(response3.json().get('title'))+'\n'+
+    'Lichess Patron: '+str(response3.json().get('patron'))+'\n'+
+    'Profile Link: '+str(response3.json().get('url'))+'\n'+
+    'Online Status: '+str(response3.json().get('online'))+'\n\n'+
+    'All Games Played: '+str(response3.json().get('count')['all'])+'\n'+
+    'Rated Games: '+str(response3.json().get('count')['rated'])+'\n'+
+    'Wins: '+str(response3.json().get('count')['win'])+'\n'+
+    'Draws: '+str(response3.json().get('count')['draw'])+'\n'+
+    'Losses: '+str(response3.json().get('count')['loss'])+'\n'+
+    'Completion Rate: '+str(response3.json().get('completionRate'))+'%\n'+
+    'Games Playing Now: '+str(response3.json().get('count')['playing'])+'\n\n'+
+    'Followers: '+str(response3.json().get('nbFollowers'))+'\n'+
+    'Following: '+str(response3.json().get('nbFollowing'))+'\n\u200b')
+  else:
+    allinfo="User Not Found"
   myEmbed1 = discord.Embed(title="Patzer Bot: Chess Area", description=allinfo,color=0x00ff00)
   ratings=''
-  if 'ultraBullet' in response3.json().get('perfs'):
-    ratings='Games: '+str((response3.json().get('perfs')['ultraBullet']['games']))+'\n'
-    ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['ultraBullet']['rating']))+'\n\n'
-    myEmbed1.add_field(name="UltraBullet", value = ratings, inline=True)
-  if 'bullet' in response3.json().get('perfs'):
-    ratings='Games: '+str((response3.json().get('perfs')['bullet']['games']))+'\n'
-    ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['bullet']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Bullet", value = ratings, inline=True)
-  if 'blitz' in (response3.json().get('perfs')):
-    ratings='Games: '+str((response3.json().get('perfs')['blitz']['games']))+'\n'
-    ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['blitz']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Blitz", value = ratings, inline=True)
-  if 'rapid' in response3.json().get('perfs'):
-    ratings='Games: '+str((response3.json().get('perfs')['rapid']['games']))+'\n'
-    ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['rapid']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Rapid", value = ratings, inline=True)
-  if 'classical' in response3.json().get('perfs'):
-    ratings='Games: '+str((response3.json().get('perfs')['classical']['games']))+'\n'
-    ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['classical']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Classical", value = ratings, inline=True)
-  if 'correspondence' in response3.json().get('perfs'):
-    ratings='Games: '+str((response3.json().get('perfs')['correspondence']['games']))+'\n'
-    ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['correspondence']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Correspondence", value = ratings, inline=True)
-  if 'puzzle' in response3.json().get('perfs'):
-    puzzles='Puzzles: '+str((response3.json().get('perfs')['puzzle']['games']))+'\n'
-    puzzles=str(puzzles)+'Rating: '+str((response3.json().get('perfs')['puzzle']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Puzzles", value = puzzles, inline=True)
-  if 'storm' in response3.json().get('perfs'):
-    puzzles='Runs: '+str((response3.json().get('perfs')['storm']['runs']))+'\n'
-    puzzles=str(puzzles)+'Score: '+str((response3.json().get('perfs')['storm']['score']))
-    myEmbed1.add_field(name="Puzzle Storm", value = puzzles, inline=True)
-  myEmbed1.set_footer(text="For variant ratings use p.lichessvariantratings [username]")
+  if 'perfs' in response3.json():
+    if 'ultraBullet' in response3.json().get('perfs'):
+      ratings='Games: '+str((response3.json().get('perfs')['ultraBullet']['games']))+'\n'
+      ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['ultraBullet']['rating']))+'\n\n'
+      myEmbed1.add_field(name="UltraBullet", value = ratings, inline=True)
+    if 'bullet' in response3.json().get('perfs'):
+      ratings='Games: '+str((response3.json().get('perfs')['bullet']['games']))+'\n'
+      ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['bullet']['rating']))+'\n\n'
+      myEmbed1.add_field(name="Bullet", value = ratings, inline=True)
+    if 'blitz' in (response3.json().get('perfs')):
+      ratings='Games: '+str((response3.json().get('perfs')['blitz']['games']))+'\n'
+      ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['blitz']['rating']))+'\n\n'
+      myEmbed1.add_field(name="Blitz", value = ratings, inline=True)
+    if 'rapid' in response3.json().get('perfs'):
+      ratings='Games: '+str((response3.json().get('perfs')['rapid']['games']))+'\n'
+      ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['rapid']['rating']))+'\n\n'
+      myEmbed1.add_field(name="Rapid", value = ratings, inline=True)
+    if 'classical' in response3.json().get('perfs'):
+      ratings='Games: '+str((response3.json().get('perfs')['classical']['games']))+'\n'
+      ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['classical']['rating']))+'\n\n'
+      myEmbed1.add_field(name="Classical", value = ratings, inline=True)
+    if 'correspondence' in response3.json().get('perfs'):
+      ratings='Games: '+str((response3.json().get('perfs')['correspondence']['games']))+'\n'
+      ratings=str(ratings)+'Rating: '+str((response3.json().get('perfs')['correspondence']['rating']))+'\n\n'
+      myEmbed1.add_field(name="Correspondence", value = ratings, inline=True)
+    if 'puzzle' in response3.json().get('perfs'):
+      puzzles='Puzzles: '+str((response3.json().get('perfs')['puzzle']['games']))+'\n'
+      puzzles=str(puzzles)+'Rating: '+str((response3.json().get('perfs')['puzzle']['rating']))+'\n\n'
+      myEmbed1.add_field(name="Puzzles", value = puzzles, inline=True)
+    if 'storm' in response3.json().get('perfs'):
+      puzzles='Runs: '+str((response3.json().get('perfs')['storm']['runs']))+'\n'
+      puzzles=str(puzzles)+'Score: '+str((response3.json().get('perfs')['storm']['score']))
+      myEmbed1.add_field(name="Puzzle Storm", value = puzzles, inline=True)
+    myEmbed1.set_footer(text="For variant ratings use p.lichessvariantratings [username]")
   await content.response.send_message(embed=myEmbed1)
 
 @client.tree.command(name="variantratings", description="Lichess variant ratings (less games highest rating)")
 async def variantratings(content:discord.Interaction , username:str):
-  myEmbed1 = discord.Embed(title="Patzer Bot: Chess Area", description="More Ratings Info:",color=0x00ff00)
   response3=requests.get (str(f'https://lichess.org/api/user/{username}'))
   otherr=''
-  if 'chess960' in response3.json().get('perfs'):
-    otherr='Games: '+str((response3.json().get('perfs')['chess960']['games']))+'\n'
-    otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['chess960']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Chess960", value = otherr, inline=True)
-  if 'crazyhouse' in response3.json().get('perfs'):
-    otherr='Games: '+str((response3.json().get('perfs')['crazyhouse']['games']))+'\n'
-    otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['crazyhouse']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Crazyhouse", value = otherr, inline=True)
-  if 'antichess' in response3.json().get('perfs'):
-    otherr='Games: '+str((response3.json().get('perfs')['antichess']['games']))+'\n'
-    otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['antichess']['rating']))+'\n\n'
-    myEmbed1.add_field(name="AntiChess", value = otherr, inline=True)
-  if 'atomic' in response3.json().get('perfs'):
-    otherr='Games: '+str((response3.json().get('perfs')['atomic']['games']))+'\n'
-    otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['atomic']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Atomic", value = otherr, inline=True)
-  if 'horde' in response3.json().get('perfs'):
-    otherr='Games: '+str((response3.json().get('perfs')['horde']['games']))+'\n'
-    otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['horde']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Horde", value = otherr, inline=True)
-  if 'kingOfTheHill' in response3.json().get('perfs'):
-    otherr='Games: '+str((response3.json().get('perfs')['kingOfTheHill']['games']))+'\n'
-    otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['kingOfTheHill']['rating']))+'\n\n'
-    myEmbed1.add_field(name="KingOfTheHill", value = otherr, inline=True)
-  if 'racingKings' in response3.json().get('perfs'):
-    otherr='Games: '+str((response3.json().get('perfs')['racingKings']['games']))+'\n'
-    otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['racingKings']['rating']))+'\n\n'
-    myEmbed1.add_field(name="Racing Kings", value = otherr, inline=True)
-  if 'threeCheck' in response3.json().get('perfs'):
-    otherr='Games: '+str((response3.json().get('perfs')['threeCheck']['games']))+'\n'
-    otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['threeCheck']['rating']))+'\n\n'
-    myEmbed1.add_field(name="3-Check", value = otherr, inline=True)
-
+  if response3.json().get("error")!="Not found":
+      myEmbed1 = discord.Embed(title="Patzer Bot: Chess Area", description="User variant ratings (if any)",color=0x00ff00)
+      if 'chess960' in response3.json().get('perfs'):
+        otherr='Games: '+str((response3.json().get('perfs')['chess960']['games']))+'\n'
+        otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['chess960']['rating']))+'\n\n'
+        myEmbed1.add_field(name="Chess960", value = otherr, inline=True)
+      if 'crazyhouse' in response3.json().get('perfs'):
+        otherr='Games: '+str((response3.json().get('perfs')['crazyhouse']['games']))+'\n'
+        otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['crazyhouse']['rating']))+'\n\n'
+        myEmbed1.add_field(name="Crazyhouse", value = otherr, inline=True)
+      if 'antichess' in response3.json().get('perfs'):
+        otherr='Games: '+str((response3.json().get('perfs')['antichess']['games']))+'\n'
+        otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['antichess']['rating']))+'\n\n'
+        myEmbed1.add_field(name="AntiChess", value = otherr, inline=True)
+      if 'atomic' in response3.json().get('perfs'):
+        otherr='Games: '+str((response3.json().get('perfs')['atomic']['games']))+'\n'
+        otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['atomic']['rating']))+'\n\n'
+        myEmbed1.add_field(name="Atomic", value = otherr, inline=True)
+      if 'horde' in response3.json().get('perfs'):
+        otherr='Games: '+str((response3.json().get('perfs')['horde']['games']))+'\n'
+        otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['horde']['rating']))+'\n\n'
+        myEmbed1.add_field(name="Horde", value = otherr, inline=True)
+      if 'kingOfTheHill' in response3.json().get('perfs'):
+        otherr='Games: '+str((response3.json().get('perfs')['kingOfTheHill']['games']))+'\n'
+        otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['kingOfTheHill']['rating']))+'\n\n'
+        myEmbed1.add_field(name="KingOfTheHill", value = otherr, inline=True)
+      if 'racingKings' in response3.json().get('perfs'):
+        otherr='Games: '+str((response3.json().get('perfs')['racingKings']['games']))+'\n'
+        otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['racingKings']['rating']))+'\n\n'
+        myEmbed1.add_field(name="Racing Kings", value = otherr, inline=True)
+      if 'threeCheck' in response3.json().get('perfs'):
+        otherr='Games: '+str((response3.json().get('perfs')['threeCheck']['games']))+'\n'
+        otherr=str(otherr)+'Rating: '+str((response3.json().get('perfs')['threeCheck']['rating']))+'\n\n'
+        myEmbed1.add_field(name="3-Check", value = otherr, inline=True)
+  else:
+    myEmbed1 = discord.Embed(title="Patzer Bot: Chess Area", description="User not found",color=0x00ff00)
   await content.response.send_message(embed=myEmbed1)
 
 
-# @client.tree.command(name='gamegif' , description='GIF of a lichess game (no customization yet but roles coming....everything refreshes)')
-# @commands.cooldown(1,5,commands.BucketType.user)
-# async def gamegif(content:discord.Interaction, gamelink:str):
-#  gamelink=gamelink.replace("https://lichess.org/", "")
-#  gamelink=gamelink.replace("/black", "")
-#  gamelink=gamelink.replace("/white", "")
-#  global updatedgamelink
-#  updatedgamelink=gamelink
-#  game=str(f"https://lichess.org/game/export/gif/{gamelink}.gif")
-#  await content.response.send_message(game, view=Gif())
+@client.tree.command(name='gamegif' , description='GIF of a lichess game (no customization yet but roles coming....everything refreshes)')
+@commands.cooldown(1,5,commands.BucketType.user)
+async def gamegif(content:discord.Interaction, gamelink:str):
+ gamelink=gamelink.replace("https://lichess.org/", "")
+ gamelink=gamelink.replace("/black", "")
+ gamelink=gamelink.replace("/white", "")
+ global updatedgamelink
+ updatedgamelink=gamelink
+ response=requests.get(str(f"https://lichess.org/game/export/gif/{gamelink}.gif"))
+ if response.status_code == 404:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Game not found",color=0x00ff00)
+    await content.response.send_message(embed=myEmbed)
+ else: 
+    await content.response.send_message(response, view=Gif())
  
 #  role1=await content.response.send_message(game)
 #  await role1.add_reaction("🔃")
@@ -204,31 +216,35 @@ async def variantratings(content:discord.Interaction , username:str):
 
 @client.tree.command(name="swissrankings", description="Lichess Swiss Tournament Ranking/game downloads/trf download")
 async def swissrankings(content:discord.Interaction, tournamentlink:str):
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Swiss Tournament Database \n""\u200b",color=0x00ff00)
-  tournamentlink=tournamentlink.replace("https://lichess.org/swiss/", "")
-  a=(f"https://lichess.org/swiss/{tournamentlink}.trf")
-  buttons=Empty()
-  buttons.add_item(discord.ui.Button(label="Download TRF",style=discord.ButtonStyle.link,url=a))
-  b=(f"https://lichess.org/api/swiss/{tournamentlink}/games")
-  buttons.add_item(discord.ui.Button(label="Download Games",style=discord.ButtonStyle.link,url=b))
   response4=requests.get (f'https://lichess.org/api/swiss/{tournamentlink}/results')
-  data = response4.text.strip("\n")
-  s = data.split("\n")
-  count = 0
-  display=''
-  for i in s:
-    dict = json.loads(i)
-    title = ''
-    if (dict.get("title") != None):
-      title = dict.get("title")
-    Sno=dict.get("rank")
-    ranking=str(Sno)+'. '+title+' '+str(dict.get("username"))+' ('+str(dict.get("rating"))+') Performance: '+str(dict.get("performance"))+'\n'
-    display=display+ranking
-    count = count + 1
-    if (count == 10):
-      break
-  myEmbed.add_field(name="Top 10:", value =display,inline=False)
-  await content.response.send_message(embed=myEmbed, view=buttons)
+  if response4.status_code != 404:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Swiss Tournament Database \n""\u200b",color=0x00ff00)
+    tournamentlink=tournamentlink.replace("https://lichess.org/swiss/", "")
+    a=(f"https://lichess.org/swiss/{tournamentlink}.trf")
+    buttons=Empty()
+    buttons.add_item(discord.ui.Button(label="Download TRF",style=discord.ButtonStyle.link,url=a))
+    b=(f"https://lichess.org/api/swiss/{tournamentlink}/games")
+    buttons.add_item(discord.ui.Button(label="Download Games",style=discord.ButtonStyle.link,url=b))
+    data = response4.text.strip("\n")
+    s = data.split("\n")
+    count = 0
+    display=''
+    for i in s:
+      dict = json.loads(i)
+      title = ''
+      if (dict.get("title") != None):
+        title = dict.get("title")
+      Sno=dict.get("rank")
+      ranking=str(Sno)+'. '+title+' '+str(dict.get("username"))+' ('+str(dict.get("rating"))+') Performance: '+str(dict.get("performance"))+'\n'
+      display=display+ranking
+      count = count + 1
+      if (count == 10):
+        break
+    myEmbed.add_field(name="Top 10:", value =display,inline=False)
+    await content.response.send_message(embed=myEmbed, view=buttons)
+  else:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Swiss tournament not found",color=0x00ff00)
+    await content.response.send_message(embed=myEmbed)
 
 #response4=requests.get ('https://lichess.org/api/swiss/g7aovChl/results')
 #print (response4.json().get('rank'))
@@ -236,78 +252,93 @@ async def swissrankings(content:discord.Interaction, tournamentlink:str):
 @client.tree.command(name="arenarankings" , description='Lichess Arena Tournament Ranking Download (Recently Completed T/ might have issue)')
 async def arenarankings(content:discord.Interaction, tournamentlink:str):
   tournamentlink=tournamentlink.replace("https://lichess.org/tournament/", "")
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Arena Tournament Database\n""\u200b",color=0x00ff00)
-  a=(f"https://lichess.org/api/tournament/{tournamentlink}/games")
-  buttons=Empty()
-  buttons.add_item(discord.ui.Button(label="Download Games",style=discord.ButtonStyle.link,url=a))
   response4=requests.get (f'https://lichess.org/api/tournament/{tournamentlink}/results')
-  data = response4.text.strip("\n")
-  s = data.split("\n")
-  count = 0
-  display=''
-  for i in s:
-    dict = json.loads(i)
-    title = ''
-    if (dict.get("title") != None):
-      title = dict.get("title")
-    ranking=str(json.loads(i).get("rank"))+'. '+str(title)+' '+str(json.loads(i).get("username"))+' ('+str(json.loads(i).get("rating"))+')'' Points: '+str(json.loads(i).get("score"))+' Performance: '+str(json.loads(i).get("performance"))+'\n'
-    display=display+ranking
-    count=count+1
-    if (count == 10):
-      break
-  myEmbed.add_field(name="Top 10:", value =display,inline=False)
-  await content.response.send_message(embed=myEmbed, view=buttons)
+  if response4.status_code!=404:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Arena Tournament Database\n""\u200b",color=0x00ff00)
+    a=(f"https://lichess.org/api/tournament/{tournamentlink}/games")
+    buttons=Empty()
+    buttons.add_item(discord.ui.Button(label="Download Games",style=discord.ButtonStyle.link,url=a))
+    data = response4.text.strip("\n")
+    s = data.split("\n")
+    count = 0
+    display=''
+    for i in s:
+      dict = json.loads(i)
+      title = ''
+      if (dict.get("title") != None):
+        title = dict.get("title")
+      ranking=str(json.loads(i).get("rank"))+'. '+str(title)+' '+str(json.loads(i).get("username"))+' ('+str(json.loads(i).get("rating"))+')'' Points: '+str(json.loads(i).get("score"))+' Performance: '+str(json.loads(i).get("performance"))+'\n'
+      display=display+ranking
+      count=count+1
+      if (count == 10):
+        break
+    myEmbed.add_field(name="Top 10:", value =display,inline=False)
+    await content.response.send_message(embed=myEmbed, view=buttons)
+  else:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Arena Tournament not found",color=0x00ff00)
+    await content.response.send_message(embed=myEmbed)
 #-----------------------------------------------------------
-@client.tree.command(name="teamrankings", description='Lichess Team Tournament Ranking+download (spacing issue)')
+@client.tree.command(name="teamrankings", description='Lichess Team Tournament Ranking+download')
 async def teamrankings(content:discord.Interaction, tournamentlink:str):
   tournamentlink=tournamentlink.replace("https://lichess.org/tournament/", "")
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Team Arena Tournament Database \n""\u200b",color=0x00ff00)
-  a=(f"https://lichess.org/api/tournament/{tournamentlink}/games")
-  buttons=Empty()
-  buttons.add_item(discord.ui.Button(label="Download Games",style=discord.ButtonStyle.link,url=a))
   response4=requests.get (f"https://lichess.org/api/tournament/{tournamentlink}/teams")
-  lengthd = len(response4.json().get('teams'))
-  display=''
-  if lengthd >=10:
-    for a in range (0,10):
-      teamevent= str(response4.json().get('teams')[a]['rank'])+'. Team '+str(response4.json().get('teams')[a]['id'])+' (Score: '+str(response4.json().get('teams')[a]['score'])+')\n'
-      display=display+teamevent
+  if response4.status_code!=404:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Team Arena Tournament Database \n""\u200b",color=0x00ff00)
+    a=(f"https://lichess.org/api/tournament/{tournamentlink}/games")
+    buttons=Empty()
+    buttons.add_item(discord.ui.Button(label="Download Games",style=discord.ButtonStyle.link,url=a))
+    lengthd = len(response4.json().get('teams'))
+    display=''
+    if lengthd >=10:
+      for a in range (0,10):
+        teamevent= str(response4.json().get('teams')[a]['rank'])+'. Team '+str(response4.json().get('teams')[a]['id'])+' (Score: '+str(response4.json().get('teams')[a]['score'])+')\n'
+        display=display+teamevent
+    else:
+      for a in range (0,lengthd):
+        teamevent= str(response4.json().get('teams')[a]['rank'])+'. Team '+str(response4.json().get('teams')[a]['id'])+' (Score: '+str(response4.json().get('teams')[a]['score'])+')'
+        display=display+teamevent
+    myEmbed.add_field(name="Top 10:", value =display,inline=False)
+    await content.response.send_message(embed=myEmbed, view=buttons)
   else:
-    for a in range (0,lengthd):
-      teamevent= str(response4.json().get('teams')[a]['rank'])+'. Team '+str(response4.json().get('teams')[a]['id'])+' (Score: '+str(response4.json().get('teams')[a]['score'])+')'
-      display=display+teamevent
-  myEmbed.add_field(name="Top 10:", value =display,inline=False)
-  await content.response.send_message(embed=myEmbed, view=buttons)
-
-@client.tree.command(name="arenabyuser", description="Upocoming Lichess Arenas created by a user")
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Team Arena Tournament not found",color=0x00ff00)
+    await content.response.send_message(embed=myEmbed)
+                                        
+@client.tree.command(name="arenabyuser", description="Upocoming Lichess Arenas created by a user (if any)")
 async def arenabyuser(content:discord.Interaction, username:str):
   response4=requests.get(f'https://lichess.org/api/user/{username}/tournament/created')
-  data = response4.text.strip("\n")
-  s = data.split("\n")
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Tournaments made by Individuals.\n",color=0x00ff00)
-  for i in s:
-    if (i != ''):
-      created=json.loads(i).get("status")
-      if created !=30:
-        name=(json.loads(i).get("fullName"))
-        if json.loads(i).get('clock')['limit'] < 60:
-          timecontrolduration=str(json.loads(i).get('clock')['limit'])+'sec+'+str( json.loads(i).get('clock')['limit'])
-        else:
-          timecontrolduration=str(int(json.loads(i).get('clock')['limit']/60))+'+'+ str(json.loads(i).get('clock')['increment'])
-        duration=str(json.loads(i).get('minutes'))
-        linking='https://lichess.org/tournament/'.strip()+json.loads(i).get('id')
-        entire=str(name)+'\n'+str(timecontrolduration)+' Matches for '+str(duration)+' Minutes\n'+str(linking)+'\n'
-        myEmbed.add_field(name="\u200b", value = entire, inline=False)
+  if response4.status_code!=404:
+    data = response4.text.strip("\n")
+    s = data.split("\n")
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Tournaments made by Individuals.\n",color=0x00ff00)
+    for i in s:
+      if (i != ''):
+        created=json.loads(i).get("status")
+        if created !=30:
+          name=(json.loads(i).get("fullName"))
+          if json.loads(i).get('clock')['limit'] < 60:
+            timecontrolduration=str(json.loads(i).get('clock')['limit'])+'sec+'+str( json.loads(i).get('clock')['limit'])
+          else:
+            timecontrolduration=str(int(json.loads(i).get('clock')['limit']/60))+'+'+ str(json.loads(i).get('clock')['increment'])
+          duration=str(json.loads(i).get('minutes'))
+          linking='https://lichess.org/tournament/'.strip()+json.loads(i).get('id')
+          entire=str(name)+'\n'+str(timecontrolduration)+' Matches for '+str(duration)+' Minutes\n'+str(linking)+'\n'
+          myEmbed.add_field(name="\u200b", value = entire, inline=False)
+  else:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="User not found",color=0x00ff00)
   await content.response.send_message(embed=myEmbed)
 
 
 @client.tree.command(name="downloadgames", description="Download lichess games of a user")
 async def downloadgames(content: discord.Interaction, username:str):
   a=(f"https://lichess.org/api/games/user/{username}")
-  buttons=Empty()
-  buttons.add_item(discord.ui.Button(label="Download",style=discord.ButtonStyle.link,url=a))
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=(f"Click below to download all games of **{username}** in PGN\nSpeed= 20 Games per Second"),color=0x00ff00)
-  await content.response.send_message(embed=myEmbed, view=buttons)
+  if a.status_code!=404:
+    buttons=Empty()
+    buttons.add_item(discord.ui.Button(label="Download",style=discord.ButtonStyle.link,url=a))
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=(f"Click below to download all games of **{username}** in PGN\nSpeed= 20 Games per Second"),color=0x00ff00)
+    await content.response.send_message(embed=myEmbed, view=buttons)
+  else:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="User not found",color=0x00ff00)
+    await content.response.send_message(embed=myEmbed)
 
 
 #----------------------------------------------------------------
@@ -318,60 +349,75 @@ async def downloadgames(content: discord.Interaction, username:str):
 async def chesscomclub(content:discord.Interaction, clubname:str):
  clubname= clubname.replace(" ", "-")
  response3=requests.get (str(f"https://api.chess.com/pub/club/{clubname}"))
- newchess='**Club Name: **'+str(response3.json().get('name'))+'\n**Members: **'+str(response3.json().get('members_count'))+'\n**Visibility: **'+str(response3.json().get('visibility'))+'\n**Location: **'+str(response3.json().get('location'))+'\n**Joining Link: **'+str(response3.json().get('join_request'))
- myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=newchess,color=0x00ff00)
- if (response3.json().get('icon') != None):
-   myEmbed.set_thumbnail(url=str(response3.json().get('icon')))
- await content.response.send_message(embed=myEmbed)
+ if response3.status_code!=404:
+  newchess='**Club Name: **'+str(response3.json().get('name'))+'\n**Members: **'+str(response3.json().get('members_count'))+'\n**Visibility: **'+str(response3.json().get('visibility'))+'\n**Location: **'+str(response3.json().get('location'))
+  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=newchess,color=15548997)
+  if (response3.json().get('icon') != None):
+    myEmbed.set_thumbnail(url=str(response3.json().get('icon')))
+  buttons=Empty()
+  buttons.add_item(discord.ui.Button(label="Join",style=discord.ButtonStyle.link,url=response3.json().get('join_request')))
+  await content.response.send_message(embed=myEmbed, view=buttons)
+ else:
+  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Club not found",color=15548997)
+  await content.response.send_message(embed=myEmbed)
 
 @client.tree.command(name="chesscomuserinfo", description="User Info of chess.com user")
 async def chesscomuserinfo(content: discord.Interaction, username:str):
   response3=requests.get (str(f'https://api.chess.com/pub/player/{username}'))
-  response4=requests.get (str(f'https://api.chess.com/pub/player/{username}/stats'))
-  response5=requests.get (str(f'https://api.chess.com/pub/player/{username}/is-online'))
-  chesscomprofile='Username: '+str(response3.json().get('username'))+'\n'+'Profile: '+str(response3.json().get('url'))+'\nStatus of Account: '+str(response3.json().get('status'))+'\nFollowers: '+str(response3.json().get('followers'))+'\nStreamer: '+str(response3.json().get('is_streamer'))+'\nOnline: '+str(response5.json().get('online'))
-  chesscomavatar=response3.json().get("avatar")
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=chesscomprofile,color=0x00ff00)
-  myEmbed.set_thumbnail(url=chesscomavatar)
-  if response4.json().get('chess_bullet') != None:
-    chesscombullet='Rating: '+str((response4.json().get('chess_bullet')['last']['rating']))+'\nHighest Rating: '+str((response4.json().get('chess_bullet')['best']['rating']))+'\nBest Win: '+str((response4.json().get('chess_bullet')['best']['game']))+'\nWin: '+str((response4.json().get('chess_bullet')['record']['win']))+'\nDraw: '+str((response4.json().get('chess_bullet')['record']['draw']))+'\nLoss: '+str((response4.json().get('chess_bullet')['record']['loss']))
-    myEmbed.add_field(name="Bullet", value =chesscombullet, inline=True)
+  if response3.status_code!=404:
+    response4=requests.get (str(f'https://api.chess.com/pub/player/{username}/stats'))
+    response5=requests.get (str(f'https://api.chess.com/pub/player/{username}/is-online'))
+    chesscomprofile='Username: '+str(response3.json().get('username'))+'\n'+'Profile: '+str(response3.json().get('url'))+'\nStatus of Account: '+str(response3.json().get('status'))+'\nFollowers: '+str(response3.json().get('followers'))+'\nStreamer: '+str(response3.json().get('is_streamer'))+'\nOnline: '+str(response5.json().get('online'))
+    chesscomavatar=response3.json().get("avatar")
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=chesscomprofile,color=15548997)
+    myEmbed.set_thumbnail(url=chesscomavatar)
+    if response4.json().get('chess_bullet') != None:
+      chesscombullet='Rating: '+str((response4.json().get('chess_bullet')['last']['rating']))+'\nHighest Rating: '+str((response4.json().get('chess_bullet')['best']['rating']))+'\nBest Win: '+str((response4.json().get('chess_bullet')['best']['game']))+'\nWin: '+str((response4.json().get('chess_bullet')['record']['win']))+'\nDraw: '+str((response4.json().get('chess_bullet')['record']['draw']))+'\nLoss: '+str((response4.json().get('chess_bullet')['record']['loss']))
+      myEmbed.add_field(name="Bullet", value =chesscombullet, inline=True)
 
-  if response4.json().get('chess_blitz') != None:
-    chesscomblitz='Rating: '+str((response4.json().get('chess_blitz')['last']['rating']))+'\nHighest Rating: '+str((response4.json().get('chess_blitz')['best']['rating']))+'\nBest Win: '+str((response4.json().get('chess_blitz')['best']['game']))+'\nWin: '+str((response4.json().get('chess_blitz')['record']['win']))+'\nDraw: '+str((response4.json().get('chess_blitz')['record']['draw']))+'\nLoss: '+str((response4.json().get('chess_blitz')['record']['loss']))
-    myEmbed.add_field(name="Blitz", value =chesscomblitz, inline=True)
+    if response4.json().get('chess_blitz') != None:
+      chesscomblitz='Rating: '+str((response4.json().get('chess_blitz')['last']['rating']))+'\nHighest Rating: '+str((response4.json().get('chess_blitz')['best']['rating']))+'\nBest Win: '+str((response4.json().get('chess_blitz')['best']['game']))+'\nWin: '+str((response4.json().get('chess_blitz')['record']['win']))+'\nDraw: '+str((response4.json().get('chess_blitz')['record']['draw']))+'\nLoss: '+str((response4.json().get('chess_blitz')['record']['loss']))
+      myEmbed.add_field(name="Blitz", value =chesscomblitz, inline=True)
 
-  if response4.json().get('chess_rapid') != None:
-    chesscomrapid='Rating: '+str((response4.json().get('chess_rapid')['last']['rating']))+'\nHighest Rating: '+str((response4.json().get('chess_rapid')['best']['rating']))+'\nBest Win: '+str((response4.json().get('chess_rapid')['best']['game']))+'\nWin: '+str((response4.json().get('chess_rapid')['record']['win']))+'\nDraw: '+str((response4.json().get('chess_rapid')['record']['draw']))+'\nLoss: '+str((response4.json().get('chess_rapid')['record']['loss']))
-    myEmbed.add_field(name="Rapid", value =chesscomrapid, inline=True)
+    if response4.json().get('chess_rapid') != None:
+      chesscomrapid='Rating: '+str((response4.json().get('chess_rapid')['last']['rating']))+'\nHighest Rating: '+str((response4.json().get('chess_rapid')['best']['rating']))+'\nBest Win: '+str((response4.json().get('chess_rapid')['best']['game']))+'\nWin: '+str((response4.json().get('chess_rapid')['record']['win']))+'\nDraw: '+str((response4.json().get('chess_rapid')['record']['draw']))+'\nLoss: '+str((response4.json().get('chess_rapid')['record']['loss']))
+      myEmbed.add_field(name="Rapid", value =chesscomrapid, inline=True)
 
-  if response4.json().get('tactics') != None:
-    chesscomtactics='Highest Rating: '+str((response4.json().get('tactics')['highest']['rating']))+'\nLowest Rating: '+str((response4.json().get('tactics')['lowest']['rating']))
-    myEmbed.add_field(name="Tactics", value =chesscomtactics, inline=True)
+    if response4.json().get('tactics') != None:
+      chesscomtactics='Highest Rating: '+str((response4.json().get('tactics')['highest']['rating']))+'\nLowest Rating: '+str((response4.json().get('tactics')['lowest']['rating']))
+      myEmbed.add_field(name="Tactics", value =chesscomtactics, inline=True)
 
-  if response4.json().get('puzzle_rush') != None:
-    puzzlerush='Matches: '+str((response4.json().get('puzzle_rush')['best']['total_attempts']))+'\nScore: '+str((response4.json().get('puzzle_rush')['best']['score']))
-    myEmbed.add_field(name="Puzzle Rush", value =puzzlerush, inline=True)
+    if response4.json().get('puzzle_rush') != None:
+      puzzlerush='Matches: '+str((response4.json().get('puzzle_rush')['best']['total_attempts']))+'\nScore: '+str((response4.json().get('puzzle_rush')['best']['score']))
+      myEmbed.add_field(name="Puzzle Rush", value =puzzlerush, inline=True)
 
-  if response4.json().get('lessons') != None:
-    chesscomlessons='Highest Rating: '+str((response4.json().get('lessons')['highest']['rating']))+'\nLowest Rating: '+str((response4.json().get('lessons')['lowest']['rating']))
-    myEmbed.add_field(name="Puzzle Rush", value =chesscomlessons, inline=True)
+    if response4.json().get('lessons') != None:
+      chesscomlessons='Highest Rating: '+str((response4.json().get('lessons')['highest']['rating']))+'\nLowest Rating: '+str((response4.json().get('lessons')['lowest']['rating']))
+      myEmbed.add_field(name="Puzzle Rush", value =chesscomlessons, inline=True)
+  else:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="User not found",color=15548997)
   await content.response.send_message(embed=myEmbed)
 
 @client.tree.command(name="chesscomdownload", description="Download chesscom games of a person (now with time stamps)")
 async def chesscomdownload(content:discord.Interaction, username:str, year:str, monthnumber:str):
-  a=(f"https://api.chess.com/pub/player/{username}/games/{year}/{monthnumber}/pgn")
-  buttons=Empty()
-  buttons.add_item(discord.ui.Button(label="Download",style=discord.ButtonStyle.link,url=a))
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=(f"Click below to download the PGN of **{username}**'s games in **{monthnumber}/{year}**"),color=0x00ff00)
-  await content.response.send_message(embed=myEmbed, view=buttons)
+  response3=requests.get (str(f'https://api.chess.com/pub/player/{username}'))
+  if response3.status_code!=404:
+    a=(f"https://api.chess.com/pub/player/{username}/games/{year}/{monthnumber}/pgn")
+    buttons=Empty()
+    buttons.add_item(discord.ui.Button(label="Download",style=discord.ButtonStyle.link,url=a))
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=(f"Click below to download the PGN of **{username}**'s games in **{monthnumber}/{year}**"),color=15548997)
+    myEmbed.add_field(name="\u200b", value ="Note: If no games were played in the duration, the downloaded file will be empty.", inline=False)
+    await content.response.send_message(embed=myEmbed, view=buttons)
+  else:
+    myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="User not found",color=15548997)
+    await content.response.send_message(embed=myEmbed)
 
 @client.tree.command(name="chesscomleaderboard", description='chesscom Leaderboard (Formats:daily,rapid,blitz,bullet,lessons,tactics')
 async def chesscomleaderboard(content:discord.Interaction, gameformat:str):
   if gameformat=="rapid" or gameformat=="blitz" or gameformat=="bullet":
     gameformat="live_"+gameformat
   response3=requests.get ('https://api.chess.com/pub/leaderboards')
-  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description="Leaderboard\n",color=0x00ff00)
+  myEmbed = discord.Embed(title="Patzer Bot: Chess Area", description=(f"{gameformat} Leaderboard\n"),color=15548997)
   finalString = ''
   for a in range (0,10):
     username=str(response3.json().get(gameformat)[a]['username'])
@@ -386,6 +432,17 @@ async def chesscomleaderboard(content:discord.Interaction, gameformat:str):
   myEmbed.add_field(name="\u200b", value = finalString, inline=False)
   await content.response.send_message(embed=myEmbed)
 
+#-----------------Classes------------------------
+
+# class PersistentViewBot(commands.Bot):
+#   def __init__(self):
+#     intents=discord.Intents().all()
+#     super().__init__(command_prefix=commands.when_mentioned_or('p.'), intents=intents)
+#   async def setup_hook(self) -> None:
+#     self.add_view(Empty())
+#     self.add_view(Gif())
+
+# client=PersistentViewBot()
 
 class Empty(discord.ui.View):
     def __init__(self):
@@ -393,20 +450,19 @@ class Empty(discord.ui.View):
     async def Empty(self,content:discord.Interaction):
         await content.response.send_message(view=self)
 
-# class Gif(discord.ui.View):
-#     def __init__(self):
-#       super().__init__(timeout=None)
-#     @discord.ui.button(label="Flip",style=discord.ButtonStyle.gray, emoji="🔄")
-#     async def Gif(self, content:discord.Interaction,button:discord.ui.Button):
-#       count=2
-#       if count%2==0:
-#         game=(f"https://lichess.org/game/export/gif/black/{updatedgamelink}.gif")
-#         count=count+1
-#       else:
-#         game=(f"https://lichess.org/game/export/gif/{updatedgamelink}.gif")
-#         count=count+1
-#       await content.response.edit_message(content=game)
-
+class Gif(discord.ui.View):
+    def __init__(self):
+      super().__init__(timeout=None)
+    @discord.ui.button(label="Flip",style=discord.ButtonStyle.gray, emoji="🔄", custom_id="1")
+    async def Gif(self, content:discord.Interaction,button:discord.ui.Button):
+      count=2
+      if count%2==0:
+        game=(f"https://lichess.org/game/export/gif/black/{updatedgamelink}.gif")
+        count=count+1
+      else:
+        game=(f"https://lichess.org/game/export/gif/{updatedgamelink}.gif")
+        count=count+1
+      await content.response.edit_message(content=game)
 
 keep_alive()
 client.run(os.getenv('TOKEN'))
