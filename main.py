@@ -6,14 +6,17 @@ import requests
 import json
 import berserk
 
-token =os.getenv('Lichesstoken')
-session = berserk.TokenSession(token)
+lichesstoken ="xyz"
+session = berserk.TokenSession(lichesstoken)
 lichess= berserk.Client(session=session)
 tournaments = lichess.tournaments.get()
 lengthinfo=len(tournaments['created'])
 lengthstarted=len(tournaments['started'])
+headers = {'User-Agent':'dhawalplaysd4'}
 #updatedgamelink=""
 
+TESTINGTOKEN="xyz"
+TOKEN="xyz"
 client = commands.Bot(command_prefix=['Ptz.','ptz.','p.','P.'], intents=discord.Intents.all())
 #intents=discord.Intents.all()
 client.remove_command("help")
@@ -22,7 +25,7 @@ client.remove_command("help")
 async def on_ready():
   print ('We have logged in as {0.user}' .format (client))
   await client.wait_until_ready()
-  await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="/help"))
+  #await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="/help"))
   await client.tree.sync()
 
 
@@ -31,20 +34,20 @@ async def on_ready():
 async def help(content: discord.Interaction):
    myEmbed = discord.Embed(title="Patzer Bot", description="Your One-Stop Chess Data Retrieval Tool\n\n \
     **Lichess:**\n\
-    </score:1116190863131951254>: Score between two players.\n\
-    </userinfo:1116190863131951255>: Player profile.\n\
-    </variantratings:1116190863131951256>: Player variant ratings.\n\
-    </gamegif:1116190863131951257>: Generates a GIF of game link entered.\n\
-    </swissrankings:1116190863131951258>: Shows swiss tournament results.\n\
-    </arenarankings:1116190863131951259>: Shows arena tournament results.\n\
-    </teamrankings:1116190863131951260>: Shows team tournament results.\n\
-    </arenabyuser:1116190863131951261>: Upcoming arena tournaments by a user.\n\
-    </downloadgames:1116190863131951262>: Download games of a player.\n\n\
+    </score:1116564750080421959>: Score between two players.\n\
+    </userinfo:1116564750080421960>: Player profile.\n\
+    </variantratings:1116564750080421961>: Player variant ratings.\n\
+    </gamegif:1146189138387816499>: Generates a GIF of game link entered.\n\
+    </swissrankings:1116564750080421963>: Shows swiss tournament results.\n\
+    </arenarankings:1116564750080421964>: Shows arena tournament results.\n\
+    </teamrankings:1116564750080421965>: Shows team tournament results.\n\
+    </arenabyuser:1116564750080421966>: Upcoming arena tournaments by a user.\n\
+    </downloadgames:1116564750080421967>: Download games of a player.\n\n\
     **Chess.com:**\n\
-    </chesscomclub:1115664491359768638>: Chess.com club details\n\
-    </chesscomuserinfo:1115817566326227096>: Chess.com player profile\n\
-    </chesscomdownload:1115817566326227097>: Download Chess.com games of a player\n\
-    </chesscomleaderboard:1115837501240770601>: Chess.com all time leaderboards", color=0x00ff00)
+    </chesscomclub:1116564750512423063>: Chess.com club details\n\
+    </chesscomuserinfo:1116564750512423064>: Chess.com player profile\n\
+    </chesscomdownload:1116564750512423065>: Download Chess.com games of a player\n\
+    </chesscomleaderboard:1116564750512423066>: Chess.com all time leaderboards", color=0x00ff00)
    buttons=Empty()
    buttons.add_item(discord.ui.Button(label="Invite Bot",style=discord.ButtonStyle.link,url="https://discord.com/api/oauth2/authorize?client_id=803120439550279690&permissions=519233&scope=bot"))
    buttons.add_item(discord.ui.Button(label="Support Server",style=discord.ButtonStyle.link,url="https://discord.gg/cdfUp5Zqs7"))
@@ -350,15 +353,17 @@ async def arenabyuser(content:discord.Interaction, username:str):
 
 @client.tree.command(name="downloadgames", description="Download lichess games of a user")
 async def downloadgames(content: discord.Interaction, username:str):
-  a=(f"https://lichess.org/api/games/user/{username}")
-  if a.status_code!=404:
-    buttons=Empty()
-    buttons.add_item(discord.ui.Button(label="Download",style=discord.ButtonStyle.link,url=a))
-    myEmbed = discord.Embed(title="Patzer Bot", description=(f"Click below to download all games of **{username}** in PGN\nSpeed= 20 Games per Second"),color=0x00ff00)
-    await content.response.send_message(embed=myEmbed, view=buttons)
-  else:
-    myEmbed = discord.Embed(title="Patzer Bot", description="User not found",color=0x00ff00)
-    await content.response.send_message(embed=myEmbed)
+  a=f"https://lichess.org/api/games/user/{username}"
+  #if a.status_code!=404:
+  buttons=Empty()
+  buttons.add_item(discord.ui.Button(label="Download",style=discord.ButtonStyle.link,url=a))
+  myEmbed = discord.Embed(title="Patzer Bot", description=(f"Click below to download all games of **{username}** in PGN\nSpeed= 20 Games per Second"),color=0x00ff00)
+  myEmbed.add_field(name="\u200b", value ="Note: If no games were played/user does not exist, the downloaded file will be empty.", inline=False)
+  #await content.response.send_message(embed=myEmbed, view=buttons)
+  await content.response.send_message(embed=myEmbed, view=buttons)
+  #else:
+  #myEmbed = discord.Embed(title="Patzer Bot", description="User not found",color=0x00ff00)
+  #await content.response.send_message(embed=myEmbed)
 
 
 #----------------------------------------------------------------
@@ -368,7 +373,7 @@ async def downloadgames(content: discord.Interaction, username:str):
 @commands.cooldown(1,5,commands.BucketType.user)
 async def chesscomclub(content:discord.Interaction, clubname:str):
  clubname= clubname.replace(" ", "-")
- response3=requests.get (str(f"https://api.chess.com/pub/club/{clubname}"))
+ response3=requests.get(f"https://api.chess.com/pub/club/{clubname}",headers=headers)
  if response3.status_code!=404:
   newchess='**Club Name: **'+str(response3.json().get('name'))+'\n**Members: **'+str(response3.json().get('members_count'))+'\n**Visibility: **'+str(response3.json().get('visibility'))+'\n**Location: **'+str(response3.json().get('location'))
   myEmbed = discord.Embed(title="Patzer Bot", description=newchess,color=15548997)
@@ -383,10 +388,10 @@ async def chesscomclub(content:discord.Interaction, clubname:str):
 
 @client.tree.command(name="chesscomuserinfo", description="User info of chess.com user")
 async def chesscomuserinfo(content: discord.Interaction, username:str):
-  response3=requests.get (str(f'https://api.chess.com/pub/player/{username}'))
+  response3=requests.get (f'https://api.chess.com/pub/player/{username}',headers=headers)
   if response3.status_code!=404:
-    response4=requests.get (str(f'https://api.chess.com/pub/player/{username}/stats'))
-    response5=requests.get (str(f'https://api.chess.com/pub/player/{username}/is-online'))
+    response4=requests.get (f'https://api.chess.com/pub/player/{username}/stats',headers=headers)
+    response5=requests.get (f'https://api.chess.com/pub/player/{username}/is-online',headers=headers)
     chesscomprofile='Username: '+str(response3.json().get('username'))+'\n'+'Profile: '+str(response3.json().get('url'))+'\nStatus of Account: '+str(response3.json().get('status'))+'\nFollowers: '+str(response3.json().get('followers'))+'\nStreamer: '+str(response3.json().get('is_streamer'))+'\nOnline: '+str(response5.json().get('online'))
     chesscomavatar=response3.json().get("avatar")
     myEmbed = discord.Embed(title="Patzer Bot", description=chesscomprofile,color=15548997)
@@ -420,7 +425,7 @@ async def chesscomuserinfo(content: discord.Interaction, username:str):
 
 @client.tree.command(name="chesscomdownload", description="Download Chess.com games of a person")
 async def chesscomdownload(content:discord.Interaction, username:str, year:str, monthnumber:str):
-  response3=requests.get (str(f'https://api.chess.com/pub/player/{username}'))
+  response3=requests.get (f'https://api.chess.com/pub/player/{username}',headers=headers)
   if response3.status_code!=404:
     a=(f"https://api.chess.com/pub/player/{username}/games/{year}/{monthnumber}/pgn")
     buttons=Empty()
@@ -436,7 +441,7 @@ async def chesscomdownload(content:discord.Interaction, username:str, year:str, 
 async def chesscomleaderboard(content:discord.Interaction, gameformat:str):
   if gameformat=="rapid" or gameformat=="blitz" or gameformat=="bullet":
     actualgameformat="live_"+gameformat
-  response3=requests.get ('https://api.chess.com/pub/leaderboards')
+  response3=requests.get ('https://api.chess.com/pub/leaderboards',headers=headers)
   myEmbed = discord.Embed(title="Patzer Bot", description=("Leaderboard"),color=15548997)
   finalString = ''
   for a in range (0,10):
@@ -484,4 +489,4 @@ class Gif(discord.ui.View):
         count=count+1
       await content.response.edit_message(content=game)
 
-client.run(os.getenv('TOKEN'))
+client.run(TOKEN)
