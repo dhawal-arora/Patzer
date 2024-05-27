@@ -4,7 +4,7 @@
 
 ## Description
 
-Previously, a bot made to both advertise events/tournaments between servers and chess commands. Later, made into a chess only bot. A Discord verified chess bot that displays and computes useful information from Chess.com and Lichess.org, made back in 2020.
+Previously, a bot made to both advertise events and tournaments between servers and execute chess commands. Later, made into a chess-only bot. A Discord-verified chess bot that displays and computes useful information from Chess.com and Lichess.org, made back in 2020. It is posted here only for reference and is not online anymore. (This was one of my first coding projects and was successfully implemented in 75+ servers with thousands of server members, hence encouraging me to code as a career.)
 
 ### Executing program
 
